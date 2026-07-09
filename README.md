@@ -14,6 +14,11 @@ If you are sharing it with someone else on the same network, replace `127.0.0.1`
 
 This project is now ready to deploy to a hosting service that gives you a public URL.
 
+For Replit, use:
+
+- `main.py`
+- `.replit`
+
 Use the production entry point:
 
 - `wsgi.py`

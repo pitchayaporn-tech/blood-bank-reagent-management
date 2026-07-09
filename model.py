@@ -1864,6 +1864,24 @@ def _requestable_reagent_lots(connection):
         INNER JOIN Inventory AS i ON i.reagent_id = r.reagent_id
         WHERE COALESCE(i.quantity_on_hand, 0) > 0
           AND LOWER(COALESCE(i.status, '')) = 'available for use'
+          AND i.expiry_date IS NOT NULL
+          AND i.expiry_date <> ''
+          AND date(i.expiry_date) >= date('now')
+          AND LOWER(
+              COALESCE(
+                  (
+                      SELECT COALESCE(qc.qc_result, qc.result, qc.status, '')
+                      FROM QC_record AS qc
+                      WHERE qc.inventory_id = i.inventory_id
+                      ORDER BY
+                          CASE WHEN qc.qc_datetime IS NULL OR qc.qc_datetime = '' THEN 1 ELSE 0 END ASC,
+                          qc.qc_datetime DESC,
+                          qc.qc_record_id DESC
+                      LIMIT 1
+                  ),
+                  ''
+              )
+          ) IN ('pass', 'passed', 'success')
         ORDER BY
             r.reagent_id ASC,
             CASE

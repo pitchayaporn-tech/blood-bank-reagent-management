@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Create Requisition | Blood Bank Reagent Quality & Inventory Management System{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xxl-11">
+    <div class="card border-0 mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+          <div>
+            <div class="small text-uppercase text-muted fw-semibold">Requisition workflow</div>
+            <h1 class="h3 mb-1">Create Requisition</h1>
+            <p class="text-muted mb-0">Add one or more reagent lines to the requisition.</p>
+          </div>
+          <a class="btn btn-outline-secondary" href="{{ url_for('request_history') }}"><i class="bi bi-arrow-left me-2"></i>Back to History</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0">
+      <div class="card-body p-4 p-lg-5">
+        <form method="post" id="request-form" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="form-section mb-4">
+            <div class="form-section-title">Requisition details</div>
+            <div class="row g-3">
+              {{ ui.render_textarea(form.notes, wrapper_class="col-12", rows=3, help_text="Optional requisition remarks") }}
+            </div>
+          </div>
+
+          <div class="form-section mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+              <div>
+                <div class="form-section-title mb-1">Reagent lines</div>
+                <div class="small text-muted">Add the reagents and quantities needed for this requisition. Only lots that have passed QC and are not expired will appear.</div>
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm" id="add-row">
+                <i class="bi bi-plus-lg me-2"></i>Add Reagent
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table align-middle" id="request-lines">
+                <thead class="table-light">
+                  <tr>
+                    <th style="min-width: 260px;">Reagent</th>
+                    <th style="width: 160px;">Quantity</th>
+                    <th style="width: 80px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for i in range(line_count) %}
+                  <tr>
+                    <td>
+                      <select name="reagent_id[]" class="form-select">
+                        <option value="">Select reagent</option>
+                        {% for reagent_id, label in reagent_choices %}
+                          <option value="{{ reagent_id }}">{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                    <td><input name="requested_quantity[]" type="number" step="0.01" class="form-control"></td>
+                    <td class="text-end">
+                      <button type="button" class="btn btn-outline-danger btn-sm remove-row"><i class="bi bi-trash3"></i></button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <template id="row-template">
+              <tr>
+                <td>
+                  <select name="reagent_id[]" class="form-select">
+                    <option value="">Select reagent</option>
+                    {% for reagent_id, label in reagent_choices %}
+                      <option value="{{ reagent_id }}">{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </td>
+                <td><input name="requested_quantity[]" type="number" step="0.01" class="form-control"></td>
+                <td class="text-end">
+                  <button type="button" class="btn btn-outline-danger btn-sm remove-row"><i class="bi bi-trash3"></i></button>
+                </td>
+              </tr>
+            </template>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save2 me-2"></i>Save Requisition</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('request_history') }}">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const tbody = document.querySelector("#request-lines tbody");
+  const template = document.querySelector("#row-template");
+  const addRowBtn = document.getElementById("add-row");
+
+  function bindRemoveButtons() {
+    document.querySelectorAll(".remove-row").forEach((button) => {
+      button.onclick = function () {
+        const rows = tbody.querySelectorAll("tr");
+        if (rows.length > 1) {
+          this.closest("tr").remove();
+        }
+      };
+    });
+  }
+
+  addRowBtn?.addEventListener("click", function () {
+    tbody.appendChild(template.content.cloneNode(true));
+    bindRemoveButtons();
+  });
+
+  bindRemoveButtons();
+})();
+</script>
+{% endblock %}

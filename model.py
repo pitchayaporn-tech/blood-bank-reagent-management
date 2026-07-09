@@ -1,6 +1,7 @@
 """Application data and business logic."""
 
 from datetime import date, datetime
+import random
 import json
 import os
 from pathlib import Path
@@ -14,6 +15,7 @@ DEFAULT_DATABASE_PATH = BASE_DIR / "database.db"
 # Keep the project database as the default so deployed apps show the same seed/data
 # that is committed in the repository unless an explicit DATABASE_PATH is provided.
 DATABASE_PATH = Path(os.environ.get("DATABASE_PATH", str(DEFAULT_DATABASE_PATH)))
+AUTO_SEED_DEMO_DATA = os.environ.get("AUTO_SEED_DEMO_DATA", "1") == "1"
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 
 DEFAULT_ADMIN_USERNAME = "admin"
@@ -68,6 +70,216 @@ def initialize_database():
                 ),
             )
             connection.commit()
+
+        _seed_demo_data_if_needed(connection)
+
+
+def _seed_demo_data_if_needed(connection):
+    """Populate the database with a lightweight demo dataset when it is empty."""
+    if not AUTO_SEED_DEMO_DATA:
+        return
+
+    reagent_count = connection.execute("SELECT COUNT(*) AS count FROM Reagent").fetchone()["count"]
+    inventory_count = connection.execute("SELECT COUNT(*) AS count FROM Inventory").fetchone()["count"]
+    if reagent_count > 0 or inventory_count > 0:
+        return
+
+    admin_id = connection.execute(
+        "SELECT user_id FROM User WHERE LOWER(COALESCE(role, '')) = 'adm' ORDER BY user_id ASC LIMIT 1"
+    ).fetchone()
+    admin_user_id = admin_id["user_id"] if admin_id else None
+
+    supplier_names = [
+        "Metro Diagnostics",
+        "Prime BioLab",
+        "Apex Medical Supply",
+        "Nova Reagents",
+        "Central Lab Traders",
+    ]
+    reagent_rows = [
+        ("Anti-A Blood Grouping Reagent", "Blood Grouping Reagent"),
+        ("Anti-B Blood Grouping Reagent", "Blood Grouping Reagent"),
+        ("Anti-D Blood Grouping Reagent", "Blood Grouping Reagent"),
+        ("AHG Reagent", "AHG Reagent"),
+        ("Coombs Control Cells", "Control Reagent"),
+        ("A1 Cells", "Screening & Identification Cells"),
+        ("B Cells", "Screening & Identification Cells"),
+        ("LISS Enhancement Solution", "Enhancement Reagent"),
+    ]
+
+    supplier_ids = {}
+    for supplier_name in supplier_names:
+        connection.execute(
+            """
+            INSERT OR IGNORE INTO Supplier (
+                supplier_name, contact_person, phone, email, address, is_active, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """,
+            (
+                supplier_name,
+                "Demo Contact",
+                "+66-2-555-0101",
+                f"{supplier_name.lower().replace(' ', '.')}@example.com",
+                "Demo Lab Road",
+            ),
+        )
+        row = connection.execute(
+            "SELECT supplier_id FROM Supplier WHERE supplier_name = ?",
+            (supplier_name,),
+        ).fetchone()
+        if row:
+            supplier_ids[supplier_name] = row["supplier_id"]
+
+    for index, (reagent_name, reagent_type) in enumerate(reagent_rows, start=1):
+        supplier_name = supplier_names[(index - 1) % len(supplier_names)]
+        supplier_id = supplier_ids.get(supplier_name)
+        reagent_code = f"RG-DEMO-{index:03d}"
+        lot_number = f"DEMO-LOT-{index:03d}"
+        expiry_date = (datetime.now().date().replace(day=1) if index == 1 else None)
+        if index % 2 == 0:
+            expiry_date = (datetime.now().date()).isoformat()
+        else:
+            expiry_date = (datetime.now().date()).replace(day=min(28, datetime.now().day)).isoformat()
+        manufacturer_date = (datetime.now().date()).isoformat()
+        storage_condition = "2-8 C"
+        critical_level = random.randint(1, 5)
+        minimum_level = random.randint(1, 5)
+
+        connection.execute(
+            """
+            INSERT OR IGNORE INTO Reagent (
+                reagent_code, reagent_name, supplier_id, manufacturer, category, unit_of_measure,
+                storage_condition, critical_level, is_active, created_at, updated_at,
+                reagent_type, lot_number, manufacturer_date, expiry_date, supplier, minimum_level
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                reagent_code,
+                reagent_name,
+                supplier_id,
+                "Demo Manufacturer",
+                reagent_type,
+                "unit",
+                storage_condition,
+                critical_level,
+                1,
+                reagent_type,
+                lot_number,
+                manufacturer_date,
+                expiry_date,
+                supplier_name,
+                minimum_level,
+            ),
+        )
+
+        reagent_row = connection.execute(
+            "SELECT reagent_id FROM Reagent WHERE reagent_code = ?",
+            (reagent_code,),
+        ).fetchone()
+        if reagent_row is None:
+            continue
+
+        quantity_on_hand = random.randint(8, 24)
+        inventory_status = "Available for Use" if index % 3 != 0 else "Pending QC"
+        connection.execute(
+            """
+            INSERT INTO Inventory (
+                reagent_id, lot_number, expiry_date, quantity_on_hand, minimum_level,
+                storage_location, status, last_updated, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """,
+            (
+                reagent_row["reagent_id"],
+                lot_number,
+                expiry_date,
+                quantity_on_hand,
+                minimum_level,
+                "Refrigerator A1" if index % 2 else "Refrigerator A2",
+                inventory_status,
+            ),
+        )
+
+    inventory_rows = connection.execute(
+        "SELECT inventory_id, reagent_id, quantity_on_hand FROM Inventory ORDER BY inventory_id ASC"
+    ).fetchall()
+    qc_types = ["Daily QC", "New Lot QC", "Periodic QC"]
+    for idx, row in enumerate(inventory_rows, start=1):
+        qc_result = "Pass" if idx % 3 != 0 else "Fail"
+        qc_status = "passed" if qc_result == "Pass" else "failed"
+        qc_time = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+        connection.execute(
+            """
+            INSERT INTO QC_record (
+                inventory_id, inspected_by_user_id, qc_date, result, remarks, temperature_c, pH_value,
+                status, created_at, updated_at, qc_datetime, qc_type, qc_result, qc_comment, user_id, reagent_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                row["inventory_id"],
+                admin_user_id,
+                qc_time,
+                qc_result,
+                f"Demo {qc_result.lower()} QC record",
+                4.0 + (idx % 2),
+                7.0,
+                qc_status,
+                qc_time,
+                qc_types[idx % len(qc_types)],
+                qc_result,
+                f"Demo {qc_result.lower()} QC record",
+                admin_user_id,
+                row["reagent_id"],
+            ),
+        )
+
+    requests_to_create = min(5, len(inventory_rows))
+    for index in range(requests_to_create):
+        status = ["Pending", "Approved", "Rejected", "Completed", "Pending"][index]
+        request_date = datetime.now().replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+        approved_by = admin_user_id if status in {"Approved", "Completed"} else None
+        approval_date = request_date if approved_by else None
+        cursor = connection.execute(
+            """
+            INSERT INTO Requisition (
+                request_date, status, requested_by, approved_by, approval_date, remarks, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """,
+            (
+                request_date,
+                status,
+                admin_user_id,
+                approved_by,
+                approval_date,
+                f"Demo requisition {index + 1}",
+            ),
+        )
+        requisition_id = cursor.lastrowid
+        row = inventory_rows[index % len(inventory_rows)]
+        qty = min(float(row["quantity_on_hand"] or 0), random.randint(1, 3))
+        connection.execute(
+            """
+            INSERT INTO Requisition_Item (
+                requisition_id, reagent_id, quantity_requested, quantity_received, created_at, updated_at, lot_number
+            ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)
+            """,
+            (
+                requisition_id,
+                row["reagent_id"],
+                qty,
+                qty if status in {"Approved", "Completed"} else 0,
+                lot_number_for_reagent(connection, row["reagent_id"]),
+            ),
+        )
+
+    connection.commit()
+
+
+def lot_number_for_reagent(connection, reagent_id):
+    row = connection.execute(
+        "SELECT lot_number FROM Inventory WHERE reagent_id = ? ORDER BY inventory_id ASC LIMIT 1",
+        (reagent_id,),
+    ).fetchone()
+    return row["lot_number"] if row else None
 
 
 def _migrate_reagent_compatibility(connection):

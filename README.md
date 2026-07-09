@@ -35,6 +35,18 @@ Good next steps for a public link:
 3. Set the start command to `gunicorn wsgi:application`.
 4. Copy the public URL the host gives you and share that link with anyone.
 
+## Keep Data After Deploy
+
+To keep SQLite data on Render, attach a persistent disk and use this mount path:
+
+- `/opt/render/project/src/storage`
+
+Then set this environment variable in Render:
+
+- `DATABASE_PATH=/opt/render/project/src/storage/database.db`
+
+Render docs note that web services use an ephemeral filesystem by default, so changes to local files are lost on redeploy unless you use a persistent disk.
+
 ## Demo Data
 
 This repo now includes sample data in `database.db`.

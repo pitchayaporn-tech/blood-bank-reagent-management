@@ -14,7 +14,8 @@ BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_DATABASE_PATH = BASE_DIR / "database.db"
 # Keep the project database as the default so deployed apps show the same seed/data
 # that is committed in the repository unless an explicit DATABASE_PATH is provided.
-DATABASE_PATH = Path(os.environ.get("DATABASE_PATH", str(DEFAULT_DATABASE_PATH)))
+DEFAULT_RENDER_DATABASE_PATH = BASE_DIR / "storage" / "database.db"
+DATABASE_PATH = Path(os.environ.get("DATABASE_PATH", str(DEFAULT_RENDER_DATABASE_PATH if os.environ.get("RENDER") else DEFAULT_DATABASE_PATH)))
 AUTO_SEED_DEMO_DATA = os.environ.get("AUTO_SEED_DEMO_DATA", "1") == "1"
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 

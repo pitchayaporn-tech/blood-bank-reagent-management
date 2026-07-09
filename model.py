@@ -37,9 +37,17 @@ def initialize_database():
     DATABASE_PATH.touch(exist_ok=True)
 
     with get_db_connection() as connection:
-        _migrate_reagent_compatibility(connection)
         with SCHEMA_PATH.open("r", encoding="utf-8") as schema_file:
             connection.executescript(schema_file.read())
+
+        _migrate_reagent_compatibility(connection)
+        _migrate_qc_record(connection)
+        _migrate_request_compatibility(connection)
+        _migrate_user_compatibility(connection)
+        _migrate_requisition_compatibility(connection)
+        _migrate_audit_log(connection)
+        connection.execute("DROP TABLE IF EXISTS Usage_record")
+        connection.commit()
 
         user_count = connection.execute("SELECT COUNT(*) AS count FROM User").fetchone()["count"]
         if user_count == 0:
@@ -58,14 +66,6 @@ def initialize_database():
                 ),
             )
             connection.commit()
-
-        _migrate_qc_record(connection)
-        _migrate_request_compatibility(connection)
-        _migrate_user_compatibility(connection)
-        _migrate_requisition_compatibility(connection)
-        _migrate_audit_log(connection)
-        connection.execute("DROP TABLE IF EXISTS Usage_record")
-        connection.commit()
 
 
 def _migrate_reagent_compatibility(connection):

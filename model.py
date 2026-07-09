@@ -145,36 +145,51 @@ def _seed_demo_data_if_needed(connection):
         critical_level = random.randint(1, 5)
         minimum_level = random.randint(1, 5)
 
+        reagent_table = connection.execute("PRAGMA table_info(Reagent)").fetchall()
+        reagent_value_map = {
+            "reagent_code": reagent_code,
+            "reagent_name": reagent_name,
+            "supplier_id": supplier_id,
+            "manufacturer": "Demo Manufacturer",
+            "category": reagent_type,
+            "unit_of_measure": "unit",
+            "storage_condition": storage_condition,
+            "critical_level": critical_level,
+            "is_active": 1,
+            "reagent_type": reagent_type,
+            "lot_number": lot_number,
+            "manufacturer_date": manufacturer_date,
+            "expiry_date": expiry_date,
+            "supplier": supplier_name,
+            "minimum_level": minimum_level,
+        }
+        insert_columns = []
+        insert_values = []
+        for column in reagent_table:
+            column_name = column["name"]
+            if column_name in {"reagent_id", "created_at", "updated_at"}:
+                continue
+            insert_columns.append(column_name)
+            value = reagent_value_map.get(column_name)
+            if value is None and column["notnull"]:
+                column_type = (column["type"] or "").upper()
+                if any(token in column_type for token in ("INT", "REAL", "NUM", "DEC")):
+                    value = 0
+                else:
+                    value = ""
+            insert_values.append(value)
+
         connection.execute(
-            """
-            INSERT OR IGNORE INTO Reagent (
-                reagent_code, reagent_name, supplier_id, manufacturer, category, unit_of_measure,
-                storage_condition, critical_level, is_active, created_at, updated_at,
-                reagent_type, lot_number, manufacturer_date, expiry_date, supplier, minimum_level
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?)
+            f"""
+            INSERT INTO Reagent (
+                {", ".join(insert_columns)}, updated_at
+            ) VALUES ({", ".join(["?"] * len(insert_columns))}, CURRENT_TIMESTAMP)
             """,
-            (
-                reagent_code,
-                reagent_name,
-                supplier_id,
-                "Demo Manufacturer",
-                reagent_type,
-                "unit",
-                storage_condition,
-                critical_level,
-                1,
-                reagent_type,
-                lot_number,
-                manufacturer_date,
-                expiry_date,
-                supplier_name,
-                minimum_level,
-            ),
+            tuple(insert_values),
         )
 
         reagent_row = connection.execute(
-            "SELECT reagent_id FROM Reagent WHERE reagent_code = ?",
-            (reagent_code,),
+            "SELECT * FROM Reagent ORDER BY reagent_id DESC LIMIT 1"
         ).fetchone()
         if reagent_row is None:
             continue

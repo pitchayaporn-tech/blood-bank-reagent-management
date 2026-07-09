@@ -731,7 +731,7 @@ def get_dashboard_alerts():
     }
 
 
-def get_dashboard_activity_feed(limit=8):
+def get_dashboard_activity_feed(limit=20):
     with get_db_connection() as connection:
         return connection.execute(
             """

@@ -2,6 +2,7 @@
 
 from datetime import date, datetime
 import json
+import os
 from pathlib import Path
 import sqlite3
 
@@ -9,7 +10,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DATABASE_PATH = BASE_DIR / "database.db"
+DEFAULT_DATABASE_PATH = Path("/tmp/database.db") if os.environ.get("RENDER") else BASE_DIR / "database.db"
+DATABASE_PATH = Path(os.environ.get("DATABASE_PATH", DEFAULT_DATABASE_PATH))
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 
 DEFAULT_ADMIN_USERNAME = "admin"
@@ -31,6 +33,7 @@ def get_db_connection():
 
 def initialize_database():
     """Create the database file, load schema, and seed the default admin."""
+    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
     DATABASE_PATH.touch(exist_ok=True)
 
     with get_db_connection() as connection:

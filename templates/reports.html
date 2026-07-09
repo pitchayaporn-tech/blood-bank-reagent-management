@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Reports | Blood Bank Reagent Quality & Inventory Management System{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <div class="small text-uppercase text-muted fw-semibold">Analytics and exports</div>
+  <h1 class="h3 mb-1">Reports</h1>
+  <p class="text-muted mb-0">Operational tables with search, sorting, and export tools.</p>
+</div>
+
+<div class="card border-0 mb-4" id="inventory-report">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <h2 class="h4 mb-1">Inventory Report</h2>
+        <p class="text-muted mb-0">Current reagent stock and storage data.</p>
+      </div>
+      <span class="badge status-badge status-neutral">{{ inventory_report|length }} rows</span>
+    </div>
+    <div class="table-responsive mt-3">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>Reagent</th>
+            <th>Type</th>
+            <th>Manufacturer</th>
+            <th>Lot Number</th>
+            <th>Expiry Date</th>
+            <th>Supplier</th>
+            <th>Stock</th>
+            <th>Minimum</th>
+            <th>Location</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in inventory_report %}
+            <tr>
+              <td class="fw-semibold">{{ row.reagent_name or '-' }}</td>
+              <td>{{ row.reagent_type or '-' }}</td>
+              <td>{{ row.manufacturer or '-' }}</td>
+              <td>{{ row.lot_number or '-' }}</td>
+              <td>{{ row.expiry_date or '-' }}</td>
+              <td>{{ row.supplier or '-' }}</td>
+              <td>{{ row.quantity_on_hand }}</td>
+              <td>{{ row.minimum_level }}</td>
+              <td>{{ row.storage_location or '-' }}</td>
+              <td>{{ ui.status_badge(row.status or 'Available') }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="10" class="text-center text-muted py-4">No inventory records found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 mb-4" id="fefo-report">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <h2 class="h4 mb-1">FEFO Priority Report</h2>
+        <p class="text-muted mb-0">Inventory ordered by earliest expiry for first-expire, first-out picking.</p>
+      </div>
+      <span class="badge status-badge status-warning">{{ fefo_report|length }} rows</span>
+    </div>
+    <div class="table-responsive mt-3">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>Reagent</th>
+            <th>Type</th>
+            <th>Lot Number</th>
+            <th>Expiry Date</th>
+            <th>Days To Expiry</th>
+            <th>Stock</th>
+            <th>Minimum</th>
+            <th>Location</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in fefo_report %}
+            <tr>
+              <td class="fw-semibold">{{ row.reagent_name or '-' }}</td>
+              <td>{{ row.reagent_type or '-' }}</td>
+              <td>{{ row.lot_number or '-' }}</td>
+              <td>{{ row.expiry_date or '-' }}</td>
+              <td>
+                {% if row.days_to_expiry is not none %}
+                  {% if row.days_to_expiry < 0 %}
+                    <span class="badge status-badge status-danger">{{ row.days_to_expiry }} days</span>
+                  {% elif row.days_to_expiry <= 30 %}
+                    <span class="badge status-badge status-warning">{{ row.days_to_expiry }} days</span>
+                  {% else %}
+                    <span class="badge status-badge status-success">{{ row.days_to_expiry }} days</span>
+                  {% endif %}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>{{ row.quantity_on_hand }}</td>
+              <td>{{ row.minimum_level }}</td>
+              <td>{{ row.storage_location or '-' }}</td>
+              <td>{{ ui.status_badge(row.status or 'Available') }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="9" class="text-center text-muted py-4">No FEFO priority items found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 mb-4" id="low-stock-report">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <h2 class="h4 mb-1">Low Stock Report</h2>
+        <p class="text-muted mb-0">Inventory items at or below minimum stock.</p>
+      </div>
+      <span class="badge status-badge status-low">{{ low_stock_report|length }} rows</span>
+    </div>
+    <div class="table-responsive mt-3">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>Reagent</th>
+            <th>Type</th>
+            <th>Lot Number</th>
+            <th>Expiry Date</th>
+            <th>Stock</th>
+            <th>Minimum</th>
+            <th>Location</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in low_stock_report %}
+            <tr>
+              <td class="fw-semibold">{{ row.reagent_name or '-' }}</td>
+              <td>{{ row.reagent_type or '-' }}</td>
+              <td>{{ row.lot_number or '-' }}</td>
+              <td>{{ row.expiry_date or '-' }}</td>
+              <td>{{ row.quantity_on_hand }}</td>
+              <td>{{ row.minimum_level }}</td>
+              <td>{{ row.storage_location or '-' }}</td>
+              <td>{{ ui.status_badge(row.status or 'Low Stock') }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="8" class="text-center text-muted py-4">No low stock items found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 mb-4" id="pending-qc-report">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <h2 class="h4 mb-1">Pending QC Report</h2>
+        <p class="text-muted mb-0">Lots waiting for QC review after receiving.</p>
+      </div>
+      <span class="badge status-badge status-warning">{{ pending_qc_report|length }} rows</span>
+    </div>
+    <div class="table-responsive mt-3">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>Datetime</th>
+            <th>QC Type</th>
+            <th>Result</th>
+            <th>Lot Number</th>
+            <th>Reagent</th>
+            <th>User</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in pending_qc_report %}
+            <tr>
+              <td>{{ row.qc_datetime }}</td>
+              <td>{{ row.qc_type }}</td>
+              <td>{{ ui.status_badge(row.qc_result or 'Pending') }}</td>
+              <td>{{ row.lot_number or '-' }}</td>
+              <td>{{ row.reagent_name or '-' }}</td>
+              <td>{{ row.user_name or '-' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No pending QC records found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 mb-4" id="failed-qc-report">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <h2 class="h4 mb-1">Failed QC Report</h2>
+        <p class="text-muted mb-0">QC records marked as failed for review and action.</p>
+      </div>
+      <span class="badge status-badge status-danger">{{ failed_qc_report|length }} rows</span>
+    </div>
+    <div class="table-responsive mt-3">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>Datetime</th>
+            <th>QC Type</th>
+            <th>Result</th>
+            <th>Lot Number</th>
+            <th>Reagent</th>
+            <th>User</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in failed_qc_report %}
+            <tr>
+              <td>{{ row.qc_datetime }}</td>
+              <td>{{ row.qc_type }}</td>
+              <td>{{ ui.status_badge(row.qc_result or row.status or 'Failed') }}</td>
+              <td>{{ row.lot_number or '-' }}</td>
+              <td>{{ row.reagent_name or '-' }}</td>
+              <td>{{ row.user_name or '-' }}</td>
+              <td>{{ row.qc_comment or '-' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="7" class="text-center text-muted py-4">No failed QC records found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 mb-4" id="qc-history-report">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <h2 class="h4 mb-1">QC History Report</h2>
+        <p class="text-muted mb-0">Summary of QC outcomes and comments.</p>
+      </div>
+      <span class="badge status-badge status-neutral">{{ qc_history_report|length }} rows</span>
+    </div>
+    <div class="table-responsive mt-3">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>Datetime</th>
+            <th>Type</th>
+            <th>Result</th>
+            <th>Comment</th>
+            <th>User</th>
+            <th>Reagent</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in qc_history_report %}
+            <tr>
+              <td>{{ row.qc_datetime }}</td>
+              <td>{{ row.qc_type }}</td>
+              <td>{{ ui.status_badge(row.qc_result or 'Pending') }}</td>
+              <td>{{ row.qc_comment or '-' }}</td>
+              <td>{{ row.user_name or '-' }}</td>
+              <td>{{ row.reagent_name or '-' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No QC history found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 mb-4" id="receiving-history-report">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <h2 class="h4 mb-1">Receiving History Report</h2>
+        <p class="text-muted mb-0">All receiving transactions recorded in the system.</p>
+      </div>
+      <span class="badge status-badge status-neutral">{{ receiving_history_report|length }} rows</span>
+    </div>
+    <div class="table-responsive mt-3">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>Receiving No.</th>
+            <th>Date</th>
+            <th>Reagent</th>
+            <th>Quantity</th>
+            <th>Received By</th>
+            <th>Lot No.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in receiving_history_report %}
+            <tr>
+              <td><span class="badge status-badge status-success">{{ row.receiving_number }}</span></td>
+              <td>{{ row.received_date }}</td>
+              <td>{{ row.reagent_name or '-' }}</td>
+              <td>{{ row.quantity_received }}</td>
+              <td>{{ row.received_by_name or '-' }}</td>
+              <td>{{ row.lot_number or '-' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No receiving records found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 mb-4" id="expiring-soon-report">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <h2 class="h4 mb-1">Expiring Soon Report</h2>
+        <p class="text-muted mb-0">Reagents expiring within 30 days for proactive review.</p>
+      </div>
+      <span class="badge status-badge status-warning">{{ expiring_soon_report|length }} rows</span>
+    </div>
+    <div class="table-responsive mt-3">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>Reagent</th>
+            <th>Type</th>
+            <th>Manufacturer</th>
+            <th>Lot Number</th>
+            <th>Expiry Date</th>
+            <th>Supplier</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in expiring_soon_report %}
+            <tr>
+              <td class="fw-semibold">{{ row.reagent_name or '-' }}</td>
+              <td>{{ row.reagent_type or '-' }}</td>
+              <td>{{ row.manufacturer or '-' }}</td>
+              <td>{{ row.lot_number or '-' }}</td>
+              <td>{{ row.expiry_date or '-' }}</td>
+              <td>{{ row.supplier or '-' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No reagents are expiring within 30 days.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 mb-4" id="expired-reagent-report">
+  <div class="card-body">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <h2 class="h4 mb-1">Expired Reagent Report</h2>
+        <p class="text-muted mb-0">Expired items requiring removal and review.</p>
+      </div>
+      <span class="badge status-badge status-danger">{{ expired_reagent_report|length }} rows</span>
+    </div>
+    <div class="table-responsive mt-3">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>Reagent</th>
+            <th>Type</th>
+            <th>Manufacturer</th>
+            <th>Lot Number</th>
+            <th>Expiry Date</th>
+            <th>Supplier</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in expired_reagent_report %}
+            <tr>
+              <td class="fw-semibold">{{ row.reagent_name or '-' }}</td>
+              <td>{{ row.reagent_type or '-' }}</td>
+              <td>{{ row.manufacturer or '-' }}</td>
+              <td>{{ row.lot_number or '-' }}</td>
+              <td>{{ row.expiry_date or '-' }}</td>
+              <td>{{ row.supplier or '-' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No expired reagents found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

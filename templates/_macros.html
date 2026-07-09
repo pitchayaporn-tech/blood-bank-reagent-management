@@ -1,0 +1,87 @@
+{% macro render_field(field, wrapper_class="col-12", input_class="form-control", field_type="text", placeholder="", help_text="", step="") -%}
+<div class="{{ wrapper_class }}">
+  <label for="{{ field.id }}" class="form-label fw-semibold">
+    {{ field.label.text }}
+    {% if field.flags.required %}<span class="text-danger ms-1">*</span>{% endif %}
+  </label>
+  {% if step %}
+    {{ field(
+      class=(input_class ~ (' is-invalid' if field.errors else '')),
+      id=field.id,
+      type=field_type,
+      placeholder=placeholder,
+      step=step,
+      required=field.flags.required
+    ) }}
+  {% else %}
+    {{ field(
+      class=(input_class ~ (' is-invalid' if field.errors else '')),
+      id=field.id,
+      type=field_type,
+      placeholder=placeholder,
+      required=field.flags.required
+    ) }}
+  {% endif %}
+  {% if help_text %}<div class="form-text">{{ help_text }}</div>{% endif %}
+  {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro render_select(field, wrapper_class="col-12", help_text="") -%}
+<div class="{{ wrapper_class }}">
+  <label for="{{ field.id }}" class="form-label fw-semibold">
+    {{ field.label.text }}
+    {% if field.flags.required %}<span class="text-danger ms-1">*</span>{% endif %}
+  </label>
+  {{ field(
+    class=('form-select' ~ (' is-invalid' if field.errors else '')),
+    id=field.id,
+    required=field.flags.required
+  ) }}
+  {% if help_text %}<div class="form-text">{{ help_text }}</div>{% endif %}
+  {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro render_textarea(field, wrapper_class="col-12", rows=3, help_text="") -%}
+<div class="{{ wrapper_class }}">
+  <label for="{{ field.id }}" class="form-label fw-semibold">
+    {{ field.label.text }}
+    {% if field.flags.required %}<span class="text-danger ms-1">*</span>{% endif %}
+  </label>
+  {{ field(
+    class=('form-control' ~ (' is-invalid' if field.errors else '')),
+    id=field.id,
+    rows=rows,
+    required=field.flags.required
+  ) }}
+  {% if help_text %}<div class="form-text">{{ help_text }}</div>{% endif %}
+  {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro render_date(field, wrapper_class="col-md-6", help_text="") -%}
+  {{ render_field(field, wrapper_class=wrapper_class, field_type="date", help_text=help_text) }}
+{%- endmacro %}
+
+{% macro render_datetime(field, wrapper_class="col-md-6", help_text="") -%}
+  {{ render_field(field, wrapper_class=wrapper_class, field_type="datetime-local", help_text=help_text) }}
+{%- endmacro %}
+
+{% macro status_badge(text) -%}
+{% set value = (text or "")|trim|lower %}
+{% if not value %}
+  {% set badge = "status-neutral" %}
+{% elif "pass" in value or "active" in value or "available" in value or "approved" in value or "completed" in value or "fulfilled" in value or "success" in value %}
+  {% set badge = "status-success" %}
+{% elif "pending" in value or "near expiry" in value or "draft" in value or "submitted" in value or "warning" in value %}
+  {% set badge = "status-warning" %}
+{% elif "low stock" in value or value == "low" or "near" in value or "expiring" in value %}
+  {% set badge = "status-low" %}
+{% elif "fail" in value or "expired" in value or "rejected" in value or "inactive" in value %}
+  {% set badge = "status-danger" %}
+{% else %}
+  {% set badge = "status-neutral" %}
+{% endif %}
+<span class="badge rounded-pill {{ badge }}">{{ text }}</span>
+{%- endmacro %}

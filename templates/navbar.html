@@ -1,0 +1,124 @@
+{% set nav_items = [
+  ('dashboard', 'Dashboard', 'bi-speedometer2', 'dashboard'),
+  ('reagent_list', 'Reagents', 'bi-eyedropper', 'reagent'),
+  ('inventory_list', 'Inventory', 'bi-box-seam', 'inventory'),
+  ('receiving_list', 'Receiving', 'bi-truck', 'receiving'),
+  ('qc_list', 'QC', 'bi-clipboard2-pulse', 'qc'),
+  ('request_history', 'Requisitions', 'bi-file-earmark-text', 'request'),
+  ('audit_log', 'Audit Log', 'bi-journal-text', 'audit'),
+  ('reports', 'Reports', 'bi-graph-up', 'reports'),
+] %}
+
+<aside class="sidebar d-none d-lg-flex">
+  <div class="sidebar-brand">
+    <div class="brand-mark">
+      <i class="bi bi-bandaid-fill fs-4"></i>
+    </div>
+    <div>
+      <div class="brand-title">Blood Bank Reagent Quality & Inventory Management System</div>
+      <div class="brand-subtitle">Hospital laboratory LIMS</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav nav flex-column">
+    <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+      <i class="bi bi-speedometer2"></i>
+      <span>Dashboard</span>
+    </a>
+
+    {% if g.user %}
+      {% for endpoint, label, icon, token in nav_items[1:] %}
+        {% if endpoint != 'audit_log' or g.user.role in ['SUP', 'ADM'] %}
+        <a class="nav-link {% if token in (request.endpoint or '') %}active{% endif %}" href="{{ url_for(endpoint) }}">
+          <i class="bi {{ icon }}"></i>
+          <span>{{ label }}</span>
+        </a>
+        {% endif %}
+      {% endfor %}
+      {% if g.user.role == 'ADM' %}
+        <a class="nav-link {% if request.endpoint == 'register' %}active{% endif %}" href="{{ url_for('register') }}">
+          <i class="bi bi-people"></i>
+          <span>Users</span>
+        </a>
+      {% endif %}
+    {% else %}
+      <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">
+        <i class="bi bi-box-arrow-in-right"></i>
+        <span>Login</span>
+      </a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    {% if g.user %}
+      <div class="sidebar-user">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="activity-dot bg-soft-primary">
+            <i class="bi bi-person-badge"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="fw-semibold text-truncate">{{ g.user.full_name or g.user.username }}</div>
+            <div class="small text-white-50 text-uppercase">{{ g.user.role or 'staff' }}</div>
+          </div>
+        </div>
+        <a class="btn btn-outline-light btn-sm w-100" href="{{ url_for('logout') }}">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+      </div>
+    {% else %}
+      <div class="small text-white-50">
+        Public dashboard access is available. Sign in to manage records.
+      </div>
+    {% endif %}
+  </div>
+</aside>
+
+<div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="mobileNav" aria-labelledby="mobileNavLabel">
+  <div class="offcanvas-header border-bottom">
+    <div class="d-flex align-items-center gap-2">
+      <div class="brand-mark bg-soft-primary text-white">
+        <i class="bi bi-bandaid-fill"></i>
+      </div>
+      <div>
+        <h2 class="h6 mb-0" id="mobileNavLabel">Blood Bank Reagent Quality & Inventory Management System</h2>
+        <div class="small text-muted">Hospital laboratory LIMS</div>
+      </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body p-0">
+    <nav class="sidebar-nav nav flex-column px-2 pt-2">
+      <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}" data-bs-dismiss="offcanvas">
+        <i class="bi bi-speedometer2"></i>
+        <span>Dashboard</span>
+      </a>
+      {% if g.user %}
+      {% for endpoint, label, icon, token in nav_items[1:] %}
+          {% if endpoint != 'audit_log' or g.user.role in ['SUP', 'ADM'] %}
+          <a class="nav-link {% if token in (request.endpoint or '') %}active{% endif %}" href="{{ url_for(endpoint) }}" data-bs-dismiss="offcanvas">
+            <i class="bi {{ icon }}"></i>
+            <span>{{ label }}</span>
+          </a>
+          {% endif %}
+        {% endfor %}
+        {% if g.user.role == 'ADM' %}
+          <a class="nav-link {% if request.endpoint == 'register' %}active{% endif %}" href="{{ url_for('register') }}" data-bs-dismiss="offcanvas">
+            <i class="bi bi-people"></i>
+            <span>Users</span>
+          </a>
+        {% endif %}
+        <div class="mt-3 px-2">
+          <div class="sidebar-user">
+            <div class="fw-semibold">{{ g.user.full_name or g.user.username }}</div>
+            <div class="small text-white-50 text-uppercase">{{ g.user.role or 'staff' }}</div>
+          </div>
+        </div>
+      {% else %}
+        <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}" data-bs-dismiss="offcanvas">
+          <i class="bi bi-box-arrow-in-right"></i>
+          <span>Login</span>
+        </a>
+      {% endif %}
+    </nav>
+  </div>
+</div>

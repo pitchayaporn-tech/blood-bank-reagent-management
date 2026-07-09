@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}QC History | Blood Bank Reagent Quality & Inventory Management System{% endblock %}
+{% block content %}
+<div class="row g-3 align-items-end mb-4">
+  <div class="col-12 col-xl-8">
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+          <div>
+            <div class="small text-uppercase text-muted fw-semibold">Quality control</div>
+            <h1 class="h3 mb-1">QC History</h1>
+            <p class="text-muted mb-0">Filter and review QC performance records.</p>
+          </div>
+          <a class="btn btn-primary" href="{{ url_for('qc_add') }}"><i class="bi bi-plus-lg me-2"></i>Add QC Record</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-4">
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <form class="row g-2" method="get" action="{{ url_for('qc_list') }}">
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="q">Search</label>
+            <input type="text" class="form-control" id="q" name="q" value="{{ search_term }}" placeholder="Result, comment, user, reagent">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="type">QC Type</label>
+            <select class="form-select" id="type" name="type">
+              <option value="">All QC Types</option>
+              <option value="Daily QC" {% if selected_type == "Daily QC" %}selected{% endif %}>Daily QC</option>
+              <option value="New Lot QC" {% if selected_type == "New Lot QC" %}selected{% endif %}>New Lot QC</option>
+              <option value="New Vial QC" {% if selected_type == "New Vial QC" %}selected{% endif %}>New Vial QC</option>
+              <option value="Periodic QC" {% if selected_type == "Periodic QC" %}selected{% endif %}>Periodic QC</option>
+            </select>
+          </div>
+          <div class="col-12 d-grid d-sm-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-funnel me-2"></i>Filter</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('qc_list') }}">Clear</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0">
+  <div class="card-body p-0 table-wrapper">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>QC Datetime</th>
+            <th>QC Type</th>
+            <th>QC Result</th>
+            <th>QC Comment</th>
+            <th>User</th>
+            <th>Reagent</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in qc_records %}
+            <tr>
+              <td>{{ record.qc_datetime }}</td>
+              <td>{{ record.qc_type }}</td>
+              <td>{{ ui.status_badge(record.qc_result or 'Pending') }}</td>
+              <td>{{ record.qc_comment or "-" }}</td>
+              <td>{{ record.user_name or "-" }}</td>
+              <td>{{ record.reagent_name or "-" }}{% if record.lot_number %} <span class="text-muted">({{ record.lot_number }})</span>{% endif %}</td>
+              <td>
+                {% if g.user and record.user_id == g.user.user_id %}
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('qc_edit', qc_record_id=record.qc_record_id) }}">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                  </a>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">No QC records found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

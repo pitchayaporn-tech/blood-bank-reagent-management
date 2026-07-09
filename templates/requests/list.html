@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Requisitions | Blood Bank Reagent Quality & Inventory Management System{% endblock %}
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <div class="small text-uppercase text-muted fw-semibold">Requisition management</div>
+    <h1 class="h3 mb-1">Requisitions</h1>
+    <p class="text-muted mb-0">View requisition history and update approval status.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('request_create') }}"><i class="bi bi-file-earmark-plus me-2"></i>Create Requisition</a>
+</div>
+
+<div class="card border-0">
+  <div class="card-body p-0 table-wrapper">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle" data-datatable="true" data-dt-actions="true">
+        <thead>
+          <tr>
+            <th>Requisition No.</th>
+            <th>Requested By</th>
+            <th>Request Date</th>
+            <th>Approved By</th>
+            <th>Approval Date</th>
+            <th>Remarks</th>
+            <th>Status</th>
+            <th>Lines</th>
+            <th>Total Qty</th>
+            <th>Reagent Lines</th>
+            <th class="text-end">Update Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for request in requests %}
+            <tr>
+              <td><span class="badge status-badge status-neutral">{{ request.request_number }}</span></td>
+              <td>{{ request.requested_by_name or "-" }}</td>
+              <td>{{ request.request_date }}</td>
+              <td>{{ request.approved_by_name or "-" }}</td>
+              <td>{{ request.approval_date or "-" }}</td>
+              <td class="small text-muted">{{ request.notes or "-" }}</td>
+              <td>{{ ui.status_badge(request.status) }}</td>
+              <td>{{ request.line_count }}</td>
+              <td>{{ request.total_requested }}</td>
+              <td class="small text-muted">{{ request.line_summary or "-" }}</td>
+              <td class="text-end">
+                <form class="d-inline-flex gap-2 align-items-center" method="post" action="{{ url_for('request_status_update', request_id=request.request_id) }}">
+                  {{ status_form.hidden_tag() }}
+                  <select name="status" class="form-select form-select-sm">
+                    <option value="Pending" {% if request.status == 'Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Approved" {% if request.status == 'Approved' %}selected{% endif %}>Approved</option>
+                    <option value="Rejected" {% if request.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                    <option value="Completed" {% if request.status == 'Completed' %}selected{% endif %}>Completed</option>
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-save2 me-1"></i>Save</button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="11" class="text-center text-muted py-4">No request history found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

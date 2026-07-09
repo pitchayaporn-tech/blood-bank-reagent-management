@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Reagents | Blood Bank Reagent Quality & Inventory Management System{% endblock %}
+{% block content %}
+<div class="row g-3 align-items-end mb-4">
+  <div class="col-12 col-xl-8">
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+          <div>
+            <div class="small text-uppercase text-muted fw-semibold">Inventory master data</div>
+            <h1 class="h3 mb-1">Reagent Management</h1>
+            <p class="text-muted mb-0">Search, review, and maintain reagent records.</p>
+          </div>
+          <a class="btn btn-primary" href="{{ url_for('reagent_add') }}">
+            <i class="bi bi-plus-lg me-2"></i>Add Reagent
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-4">
+    <div class="card border-0">
+      <div class="card-body p-4">
+        <form class="row g-2" method="get" action="{{ url_for('reagent_list') }}">
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="q">Search reagents</label>
+            <input type="text" class="form-control" id="q" name="q" value="{{ search_term }}" placeholder="Name, type, manufacturer, lot, supplier">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold" for="type">Filter by type</label>
+            <select class="form-select" id="type" name="type">
+              {% for value, label in reagent_type_choices %}
+                <option value="{{ value }}" {% if reagent_type_filter == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 d-grid d-sm-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search me-2"></i>Search</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('reagent_list') }}">Clear</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0">
+  <div class="card-body p-0 table-wrapper">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle" data-datatable="true" data-dt-actions="true">
+        <thead>
+          <tr>
+            <th>Reagent</th>
+            <th>Type</th>
+            <th>Manufacturer</th>
+            <th>Lot Number</th>
+            <th>Manufacturer Date</th>
+            <th>Expiry Date</th>
+            <th>Storage Condition</th>
+            <th>Supplier</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reagent in reagents %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ reagent.reagent_name }}</div>
+                <div class="small text-muted">{{ reagent.reagent_code or '-' }}</div>
+              </td>
+              <td>{{ reagent.reagent_type or "-" }}</td>
+              <td>{{ reagent.manufacturer or "-" }}</td>
+              <td>{{ reagent.lot_number or "-" }}</td>
+              <td>{{ reagent.manufacturer_date or "-" }}</td>
+              <td>{{ reagent.expiry_date or "-" }}</td>
+              <td>{{ reagent.storage_condition or "-" }}</td>
+              <td>{{ reagent.supplier or "-" }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('reagent_edit', reagent_id=reagent.reagent_id) }}">
+                  <i class="bi bi-pencil-square me-1"></i>Edit
+                </a>
+                <form class="d-inline" method="post" action="{{ url_for('reagent_delete', reagent_id=reagent.reagent_id) }}" onsubmit="return confirm('Delete this reagent?');">
+                  {{ delete_form.hidden_tag() }}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash3 me-1"></i>Delete
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="9" class="text-center text-muted py-4">No reagent records found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

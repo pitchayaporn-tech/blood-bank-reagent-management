@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Receiving | Blood Bank Reagent Quality & Inventory Management System{% endblock %}
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <div class="small text-uppercase text-muted fw-semibold">Logistics</div>
+    <h1 class="h3 mb-1">Reagent Receiving</h1>
+    <p class="text-muted mb-0">Review recorded receiving transactions.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('receiving_add') }}"><i class="bi bi-truck me-2"></i>Record Receiving</a>
+</div>
+
+<div class="card border-0">
+  <div class="card-body p-0 table-wrapper">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle" data-datatable="true">
+        <thead>
+          <tr>
+            <th>Receiving No.</th>
+            <th>Date</th>
+            <th>Reagent</th>
+            <th>Quantity Received</th>
+            <th>Received By</th>
+            <th>Lot No.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in receiving_records %}
+            <tr>
+              <td><span class="badge status-badge status-success">{{ record.receiving_number }}</span></td>
+              <td>{{ record.received_date }}</td>
+              <td>{{ record.reagent_name or "-" }}</td>
+              <td>{{ record.quantity_received }}</td>
+              <td>{{ record.received_by_name or "-" }}</td>
+              <td>{{ record.lot_number or "-" }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No receiving records found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

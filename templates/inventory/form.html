@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}{{ form_title }} | Blood Bank Reagent Quality & Inventory Management System{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xxl-10">
+    <div class="card border-0 mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+              <div class="small text-uppercase text-muted fw-semibold">Stock adjustment</div>
+              <h1 class="h3 mb-1">{{ form_title }}</h1>
+              <p class="text-muted mb-0">
+              {{ inventory_item.reagent_name or "Inventory item" }} | Lot: {{ inventory_item.lot_number or "-" }}
+              </p>
+            </div>
+          <a class="btn btn-outline-secondary" href="{{ url_for('inventory_list') }}">
+            <i class="bi bi-arrow-left me-2"></i>Back to List
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0">
+      <div class="card-body p-4 p-lg-5">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          {{ form.status(type="hidden") }}
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="form-section-title">Inventory detail</div>
+            </div>
+            {{ ui.render_field(form.quantity, wrapper_class="col-md-6", field_type="number", help_text="Current quantity on hand", placeholder="0.00", step="0.01") }}
+            {{ ui.render_field(form.minimum_stock, wrapper_class="col-md-6", field_type="number", help_text="Threshold for low stock", placeholder="0.00", step="0.01") }}
+            {{ ui.render_field(form.storage_location, wrapper_class="col-12", placeholder="Storage location") }}
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Status</label>
+              <input type="text" class="form-control" value="{{ inventory_item.status or 'Pending QC' }}" readonly>
+              <div class="form-text">Status is updated automatically by receiving and QC.</div>
+            </div>
+          </div>
+          <div class="d-flex flex-wrap gap-2 mt-4">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save2 me-2"></i>Save</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('inventory_list') }}">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

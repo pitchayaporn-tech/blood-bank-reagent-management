@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}{{ form_title }} | Blood Bank Reagent Quality & Inventory Management System{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xxl-10">
+    <div class="card border-0 mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+          <div>
+            <div class="small text-uppercase text-muted fw-semibold">Quality control entry</div>
+            <h1 class="h3 mb-1">{{ form_title }}</h1>
+            <p class="text-muted mb-0">Record QC activity for a reagent.</p>
+          </div>
+          <a class="btn btn-outline-secondary" href="{{ url_for('qc_list') }}"><i class="bi bi-arrow-left me-2"></i>Back to History</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0">
+      <div class="card-body p-4 p-lg-5">
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="form-section mb-4">
+            <div class="form-section-title">QC details</div>
+            <div class="alert alert-info py-2 mb-3">
+              <i class="bi bi-person-badge me-2"></i>
+              Recorded by: <strong>{{ g.user.full_name or g.user.username }}</strong>
+            </div>
+            <div class="row g-3">
+              {{ ui.render_datetime(form.qc_datetime, wrapper_class="col-md-6") }}
+              {{ ui.render_select(form.qc_type, wrapper_class="col-md-6") }}
+              {{ ui.render_select(form.qc_result, wrapper_class="col-md-6") }}
+              {{ ui.render_field(form.qc_comment, wrapper_class="col-12", placeholder="Comment") }}
+              {{ ui.render_select(form.inventory_id, wrapper_class="col-md-6") }}
+            </div>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save2 me-2"></i>Save</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('qc_list') }}">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

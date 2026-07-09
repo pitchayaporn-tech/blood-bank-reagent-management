@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui %}
+{% block title %}Audit Log | Blood Bank Reagent Quality & Inventory Management System{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card border-0 mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+          <div>
+            <div class="small text-uppercase text-muted fw-semibold">System traceability</div>
+            <h1 class="h3 mb-1">Audit Log</h1>
+            <p class="text-muted mb-0">Read-only history of important user actions and workflow changes.</p>
+          </div>
+        </div>
+        <form class="row g-3 mt-2" method="get">
+          <div class="col-12 col-lg-4">
+            <label class="form-label fw-semibold" for="q">Search</label>
+            <input class="form-control" type="search" name="q" id="q" value="{{ search_term }}" placeholder="Search audit entries">
+          </div>
+          <div class="col-12 col-md-6 col-lg-2">
+            <label class="form-label fw-semibold" for="action">Action</label>
+            <select class="form-select" name="action" id="action">
+              <option value="">All Actions</option>
+              {% for value, label in action_choices %}
+                <option value="{{ value }}" {% if selected_action == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-6 col-lg-3">
+            <label class="form-label fw-semibold" for="user">User</label>
+            <select class="form-select" name="user" id="user">
+              <option value="">All Users</option>
+              {% for value, label in user_choices %}
+                <option value="{{ value }}" {% if selected_user == value|string %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3 col-lg-1">
+            <label class="form-label fw-semibold" for="from">From</label>
+            <input class="form-control" type="date" name="from" id="from" value="{{ selected_from }}">
+          </div>
+          <div class="col-6 col-md-3 col-lg-1">
+            <label class="form-label fw-semibold" for="to">To</label>
+            <input class="form-control" type="date" name="to" id="to" value="{{ selected_to }}">
+          </div>
+          <div class="col-12 col-lg-1 d-flex align-items-end">
+            <button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel me-1"></i>Filter</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card border-0">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table id="auditLogTable" class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Event Time</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Entity</th>
+                <th>Entity ID</th>
+                <th>Details</th>
+                <th>IP Address</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in audit_logs %}
+                <tr>
+                  <td>{{ log.event_time }}</td>
+                  <td>
+                    <div class="fw-semibold">{{ log.user_name or log.user_username or 'System' }}</div>
+                    <div class="small text-muted text-uppercase">{{ log.user_role or 'system' }}</div>
+                  </td>
+                  <td>{{ ui.status_badge(log.action) }}</td>
+                  <td><span class="badge text-bg-light border">{{ log.entity_type }}</span></td>
+                  <td>{{ log.entity_id or '-' }}</td>
+                  <td class="text-truncate" style="max-width: 360px;">{{ log.details or '-' }}</td>
+                  <td>{{ log.ip_address or '-' }}</td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td colspan="7" class="text-center text-muted py-4">No audit entries found.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

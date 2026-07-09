@@ -10,8 +10,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DEFAULT_DATABASE_PATH = Path("/tmp/database.db") if os.environ.get("RENDER") else BASE_DIR / "database.db"
-DATABASE_PATH = Path(os.environ.get("DATABASE_PATH", DEFAULT_DATABASE_PATH))
+DEFAULT_DATABASE_PATH = BASE_DIR / "database.db"
+# Keep the project database as the default so deployed apps show the same seed/data
+# that is committed in the repository unless an explicit DATABASE_PATH is provided.
+DATABASE_PATH = Path(os.environ.get("DATABASE_PATH", str(DEFAULT_DATABASE_PATH)))
 SCHEMA_PATH = BASE_DIR / "schema.sql"
 
 DEFAULT_ADMIN_USERNAME = "admin"
